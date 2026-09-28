@@ -91,7 +91,7 @@ export async function registerRoutes(app: FastifyInstance) {
     if (wdPassword === null) return reply.code(500).send({ error: 'WebDAV 密码解密失败' })
 
     try {
-      const result = await doRestore(wd, wdPassword)
+      const result = await doRestore(wd, wdPassword, password)
       // settings 已被覆盖，清空所有会话强制重登
       auth.clearSessions()
       return result

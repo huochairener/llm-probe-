@@ -93,7 +93,7 @@ async function pullBackup(webdav: WebdavConfig, password: string): Promise<strin
   return res.text()
 }
 
-export async function doBackup(webdav: WebdavConfig, password: string): Promise<BackupResult> {
+export async function doBackup(webdav: WebdavConfig, webdavPassword: string): Promise<BackupResult> {
   const configs = readConfigs()
   const settings = readSettings()
   const pkg: BackupPackage = {
@@ -102,13 +102,13 @@ export async function doBackup(webdav: WebdavConfig, password: string): Promise<
     configs,
     settings,
   }
-  await ensureDir(webdav, password)
-  await pushBackup(webdav, password, JSON.stringify(pkg, null, 2))
+  await ensureDir(webdav, webdavPassword)
+  await pushBackup(webdav, webdavPassword, JSON.stringify(pkg, null, 2))
   return { ok: true, count: configs.length, createdAt: pkg.createdAt }
 }
 
-export async function doRestore(webdav: WebdavConfig, password: string): Promise<RestoreResult> {
-  const raw = await pullBackup(webdav, password)
+export async function doRestore(webdav: WebdavConfig, webdavPassword: string, appPassword: string): Promise<RestoreResult> {
+  const raw = await pullBackup(webdav, webdavPassword)
   let pkg: BackupPackage
   try {
     pkg = JSON.parse(raw)
@@ -121,8 +121,8 @@ export async function doRestore(webdav: WebdavConfig, password: string): Promise
   if (!pkg.settings.hasPassword) {
     throw new Error('备份的 settings 缺少口令，无法安全恢复')
   }
-  // 二次校验：当前输入的口令必须能匹配备份里的口令 hash，否则恢复后 apiKey 解不开
-  const matched = verifyPassword(password, pkg.settings.passwordSalt, pkg.settings.passwordHash)
+  // 二次校验：当前应用口令必须能匹配备份里的口令 hash，否则恢复后 apiKey 解不开
+  const matched = verifyPassword(appPassword, pkg.settings.passwordSalt, pkg.settings.passwordHash)
   if (!matched) {
     throw new Error('当前口令与备份中的口令不匹配，无法解密恢复出的 apiKey')
   }
