@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../lib/store'
 import type { Config } from '../lib/types'
 import ConfigForm from './ConfigForm'
+import SyncPanel from './SyncPanel'
 import SingleTest from '../pages/SingleTest'
 import BatchTest from '../pages/BatchTest'
 
@@ -16,6 +17,7 @@ export default function MainLayout() {
   const { configs, currentConfigId, currentTab, selectConfig, setTab, logout, loadConfigs } = useStore()
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Config | null>(null)
+  const [syncOpen, setSyncOpen] = useState(false)
 
   function openNew() {
     setEditing(null)
@@ -60,7 +62,10 @@ export default function MainLayout() {
           >批量测试</button>
         </div>
 
-        <button className="btn btn-secondary text-sm" onClick={logout}>退出登录</button>
+        <div className="flex items-center gap-2">
+          <button className="btn btn-secondary text-sm" onClick={() => setSyncOpen(true)}>☁ 同步</button>
+          <button className="btn btn-secondary text-sm" onClick={logout}>退出登录</button>
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -114,6 +119,7 @@ export default function MainLayout() {
       </div>
 
       <ConfigForm open={formOpen} editing={editing} onClose={() => setFormOpen(false)} onSaved={handleSaved} />
+      <SyncPanel open={syncOpen} onClose={() => setSyncOpen(false)} />
     </div>
   )
 }
