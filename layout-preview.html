@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>布局与视觉风格预览</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #0b1020;
+    color: #e2e8f0;
+    padding: 32px 20px;
+    line-height: 1.6;
+  }
+  h1 { font-size: 22px; margin-bottom: 6px; }
+  .lead { color: #94a3b8; margin-bottom: 28px; font-size: 14px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform .15s, border-color .15s;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #3b82f6; }
+  .preview { height: 220px; padding: 12px; }
+  .card-body { padding: 14px 16px; }
+  .card-body h3 { font-size: 15px; margin-bottom: 6px; }
+  .card-body p { font-size: 12.5px; color: #94a3b8; }
+  .tag {
+    display: inline-block; font-size: 10px; padding: 2px 8px;
+    border-radius: 999px; margin-top: 8px; margin-right: 4px;
+  }
+
+  /* 通用线框块 */
+  .w-bar { border-radius: 4px; }
+  .w-block { border-radius: 4px; }
+  .w-text { height: 6px; border-radius: 2px; margin-bottom: 4px; }
+
+  /* === 方案 A: 深色三栏 === */
+  .a-bg { background: #0f172a; height: 100%; display: flex; gap: 6px; }
+  .a-left { width: 96px; background: #1e293b; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .a-label { font-size: 8px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+  .a-row { height: 12px; background: #334155; border-radius: 3px; }
+  .a-btn { margin-top: auto; height: 16px; background: #3b82f6; border-radius: 3px; }
+  .a-mid { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .a-top { height: 18px; background: #1e293b; border-radius: 4px; }
+  .a-resp { flex: 1; background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 6px; }
+  .a-input { height: 20px; background: #1e293b; border-radius: 4px; }
+
+  /* === 方案 B: 浅色清爽 === */
+  .b-bg { background: #f8fafc; height: 100%; display: flex; gap: 6px; }
+  .b-left { width: 96px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .b-label { font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+  .b-row { height: 12px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 3px; }
+  .b-btn { margin-top: auto; height: 16px; background: #6366f1; border-radius: 3px; }
+  .b-mid { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .b-top { height: 18px; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; }
+  .b-resp { flex: 1; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; }
+  .b-input { height: 20px; background: #6366f1; border-radius: 4px; }
+
+  /* === 方案 C: 批量双栏 === */
+  .c-bg { background: #0f172a; height: 100%; display: flex; gap: 6px; }
+  .c-left { width: 120px; background: #1e293b; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .c-row { height: 10px; background: #334155; border-radius: 3px; display: flex; align-items: center; }
+  .c-dot { width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+  .c-ok { background: #10b981; } .c-fail { background: #ef4444; }
+  .c-run { margin-top: auto; height: 16px; background: #10b981; border-radius: 3px; }
+  .c-mid { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+  .c-toolbar { display: flex; gap: 5px; }
+  .c-tool { flex: 1; height: 16px; background: #1e293b; border-radius: 4px; }
+  .c-go { width: 50px; height: 16px; background: #3b82f6; border-radius: 4px; }
+  .c-grid { flex: 1; background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 6px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+  .c-cell { height: 100%; border-radius: 3px; }
+  .c-input { height: 18px; background: #1e293b; border-radius: 4px; }
+
+  .blue { background: #3b82f6; color: #fff; }
+  .indigo { background: #6366f1; color: #fff; }
+  .emerald { background: #10b981; color: #fff; }
+
+  .hint {
+    max-width: 1200px; margin: 24px auto 0; padding: 14px 18px;
+    background: #111827; border: 1px solid #1f2937; border-radius: 10px;
+    font-size: 13px; color: #94a3b8;
+  }
+  .hint b { color: #e2e8f0; }
+</style>
+</head>
+<body>
+  <h1>界面布局 & 视觉风格 — 三个方向</h1>
+  <p class="lead">Tauri 桌面应用。点击可在浏览器里放大查看，然后回终端告诉我你的选择（可选一个或组合）。</p>
+
+  <div class="grid">
+    <!-- A -->
+    <div class="card">
+      <div class="preview">
+        <div class="a-bg">
+          <div class="a-left">
+            <div class="a-label">配置</div>
+            <div class="a-row"></div><div class="a-row"></div><div class="a-row"></div>
+            <div class="a-btn"></div>
+          </div>
+          <div class="a-mid">
+            <div class="a-top"></div>
+            <div class="a-resp">
+              <div class="w-text" style="background:#334155;width:80%"></div>
+              <div class="w-text" style="background:#334155;width:60%"></div>
+              <div class="w-text" style="background:#475569;width:40%"></div>
+            </div>
+            <div class="a-input"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>A. 三栏 · 深色极简</h3>
+        <p>左：配置列表（baseurl/apikey/协议/模型）｜中：响应区｜底：输入与发送。深色专业调试感，信息密度高。</p>
+        <span class="tag blue">深色</span>
+        <span class="tag blue">单模型调试</span>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="card">
+      <div class="preview">
+        <div class="b-bg">
+          <div class="b-left">
+            <div class="b-label">配置</div>
+            <div class="b-row"></div><div class="b-row"></div><div class="b-row"></div>
+            <div class="b-btn"></div>
+          </div>
+          <div class="b-mid">
+            <div class="b-top"></div>
+            <div class="b-resp">
+              <div class="w-text" style="background:#cbd5e1;width:80%"></div>
+              <div class="w-text" style="background:#cbd5e1;width:60%"></div>
+              <div class="w-text" style="background:#94a3b8;width:40%"></div>
+            </div>
+            <div class="b-input"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>B. 三栏 · 浅色清爽</h3>
+        <p>结构同 A，但浅色背景 + 紫蓝主色 + 卡片投影。明亮不刺眼，适合长时间使用。</p>
+        <span class="tag indigo">浅色</span>
+        <span class="tag indigo">单模型调试</span>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="card">
+      <div class="preview">
+        <div class="c-bg">
+          <div class="c-left">
+            <div class="a-label">模型</div>
+            <div class="c-row"><span class="c-dot c-ok"></span></div>
+            <div class="c-row"><span class="c-dot c-fail"></span></div>
+            <div class="c-row"><span class="c-dot c-ok"></span></div>
+            <div class="c-row"><span class="c-dot c-ok"></span></div>
+            <div class="c-run"></div>
+          </div>
+          <div class="c-mid">
+            <div class="c-toolbar"><div class="c-tool"></div><div class="c-go"></div></div>
+            <div class="c-grid">
+              <div class="c-cell" style="background:#10b98133;border:1px solid #10b981"></div>
+              <div class="c-cell" style="background:#ef444433;border:1px solid #ef4444"></div>
+              <div class="c-cell" style="background:#10b98133;border:1px solid #10b981"></div>
+              <div class="c-cell" style="background:#10b98133;border:1px solid #10b981"></div>
+              <div class="c-cell" style="background:#f59e0b33;border:1px solid #f59e0b"></div>
+              <div class="c-cell" style="background:#10b98133;border:1px solid #10b981"></div>
+            </div>
+            <div class="c-input"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>C. 双栏批量 · 深色</h3>
+        <p>左：模型清单带状态色点｜右：批量结果网格（绿=成功/红=失败/黄=进行中）。专为"一 key 测多模型"优化。</p>
+        <span class="tag emerald">深色</span>
+        <span class="tag emerald">批量测试</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint">
+    <b>说明：</b>这三个可单选也可组合。例如选 <b>A + C</b> 意味着：应用用深色风格，主界面是单模型调试三栏，另设一个"批量测试"标签页用 C 的网格视图。配色上 A/C 用深色，B 用浅色——也可告诉我想要哪种主色。
+  </div>
+</body>
+</html>

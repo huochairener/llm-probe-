@@ -1,0 +1,23 @@
+{
+  "name": "llm-probe",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node dev.mjs",
+    "build": "pnpm -r build",
+    "build:exe": "node build/make-exe.mjs",
+    "start": "node server/dist/index.js",
+    "server:dev": "pnpm --filter @llm-probe/server dev",
+    "web:dev": "pnpm --filter @llm-probe/web dev"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "postject": "1.0.0-alpha.6"
+  }
+}
