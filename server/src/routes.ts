@@ -4,10 +4,101 @@ import { listConfigs, createConfig, updateConfig, deleteConfig, getRevealApiKey,
 import { auth as authMgr } from './auth.js'
 import { getProvider } from './provider/index.js'
 import { runSingleTest, runBatchTest } from './test-runner.js'
+import { readWebdavConfig, writeWebdavConfig, getDecryptedWebdavPassword, encryptApiKey } from './storage.js'
+import { testConnection, doBackup, doRestore } from './sync.js'
+import type { WebdavConfig } from './storage.js'
 
 export async function registerRoutes(app: FastifyInstance) {
   // ---- 健康检查 ----
   app.get('/api/health', () => ({ ok: true }))
+
+  // ---- WebDAV 同步 ----
+  app.get('/api/sync/status', async () => {
+    const wd = readWebdavConfig()
+    if (!wd) return { configured: false }
+    return { configured: true, url: wd.url, username: wd.username }
+  })
+
+  app.put('/api/sync/config', { preHandler: authGuard }, async (req, reply) => {
+    const token = (req.headers['x-session'] as string) || ''
+    const password = authMgr.getPassword(token)
+    if (!password) return reply.code(401).send({ error: '会话失效' })
+
+    const { url, username, password: wdPassword } = req.body as any
+    if (!url || !username || !wdPassword) {
+      return reply.code(400).send({ error: '缺少 url / username / password' })
+    }
+    try {
+      const cfg: WebdavConfig = {
+        url,
+        username,
+        passwordCipher: encryptApiKey(password, wdPassword),
+      }
+      writeWebdavConfig(cfg)
+      return { ok: true }
+    } catch (e: any) {
+      return reply.code(500).send({ error: e.message || String(e) })
+    }
+  })
+
+  app.post('/api/sync/test', { preHandler: authGuard }, async (req, reply) => {
+    const token = (req.headers['x-session'] as string) || ''
+    const password = authMgr.getPassword(token)
+    if (!password) return reply.code(401).send({ error: '会话失效' })
+
+    const wd = readWebdavConfig()
+    if (!wd) return reply.code(400).send({ error: '尚未配置 WebDAV 凭据' })
+
+    const wdPassword = getDecryptedWebdavPassword(password)
+    if (wdPassword === null) return reply.code(500).send({ error: 'WebDAV 密码解密失败' })
+
+    try {
+      await testConnection(wd, wdPassword)
+      return { ok: true }
+    } catch (e: any) {
+      return reply.code(400).send({ error: e.message || String(e) })
+    }
+  })
+
+  app.post('/api/sync/backup', { preHandler: authGuard }, async (req, reply) => {
+    const token = (req.headers['x-session'] as string) || ''
+    const password = authMgr.getPassword(token)
+    if (!password) return reply.code(401).send({ error: '会话失效' })
+
+    const wd = readWebdavConfig()
+    if (!wd) return reply.code(400).send({ error: '尚未配置 WebDAV 凭据' })
+
+    const wdPassword = getDecryptedWebdavPassword(password)
+    if (wdPassword === null) return reply.code(500).send({ error: 'WebDAV 密码解密失败' })
+
+    try {
+      const result = await doBackup(wd, wdPassword)
+      return result
+    } catch (e: any) {
+      return reply.code(500).send({ error: e.message || String(e) })
+    }
+  })
+
+  app.post('/api/sync/restore', { preHandler: authGuard }, async (req, reply) => {
+    const token = (req.headers['x-session'] as string) || ''
+    const password = authMgr.getPassword(token)
+    if (!password) return reply.code(401).send({ error: '会话失效' })
+
+    const wd = readWebdavConfig()
+    if (!wd) return reply.code(400).send({ error: '尚未配置 WebDAV 凭据' })
+
+    const wdPassword = getDecryptedWebdavPassword(password)
+    if (wdPassword === null) return reply.code(500).send({ error: 'WebDAV 密码解密失败' })
+
+    try {
+      const result = await doRestore(wd, wdPassword)
+      // settings 已被覆盖，清空所有会话强制重登
+      auth.clearSessions()
+      return result
+    } catch (e: any) {
+      return reply.code(400).send({ error: e.message || String(e) })
+    }
+  })
 
   // ---- 认证 ----
   app.get('/api/auth/status', () => ({
