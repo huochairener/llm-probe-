@@ -305,9 +305,14 @@ export async function doBackup(webdav: WebdavConfig, password: string): Promise<
 
 继续追加：
 
+> **重要：** `doRestore` 需要两个不同的密码参数：`webdavPassword` 用于 Basic Auth 拉
+> 取备份；`appPassword`（app 口令）用于 `verifyPassword` 二次校验——因为备份里的
+> `settings.passwordHash` 是 app 口令的 hash，而不是 webdav 密码。原设计中 `password`
+> 单参数同时承担两个角色是错的，实测会永远校验失败。
+
 ```ts
-export async function doRestore(webdav: WebdavConfig, password: string): Promise<RestoreResult> {
-  const raw = await pullBackup(webdav, password)
+export async function doRestore(webdav: WebdavConfig, webdavPassword: string, appPassword: string): Promise<RestoreResult> {
+  const raw = await pullBackup(webdav, webdavPassword)
   let pkg: BackupPackage
   try {
     pkg = JSON.parse(raw)
@@ -320,8 +325,8 @@ export async function doRestore(webdav: WebdavConfig, password: string): Promise
   if (!pkg.settings.hasPassword) {
     throw new Error('备份的 settings 缺少口令，无法安全恢复')
   }
-  // 二次校验：当前输入的口令必须能匹配备份里的口令 hash，否则恢复后 apiKey 解不开
-  const matched = verifyPassword(password, pkg.settings.passwordSalt, pkg.settings.passwordHash)
+  // 二次校验：当前 app 口令必须能匹配备份里的口令 hash，否则恢复后 apiKey 解不开
+  const matched = verifyPassword(appPassword, pkg.settings.passwordSalt, pkg.settings.passwordHash)
   if (!matched) {
     throw new Error('当前口令与备份中的口令不匹配，无法解密恢复出的 apiKey')
   }
@@ -482,7 +487,7 @@ import { readWebdavConfig, writeWebdavConfig, clearWebdavConfig, getDecryptedWeb
     if (wdPassword === null) return reply.code(500).send({ error: 'WebDAV 密码解密失败' })
 
     try {
-      const result = await doRestore(wd, wdPassword)
+      const result = await doRestore(wd, wdPassword, password)
       // settings 已被覆盖，清空所有会话强制重登
       auth.clearSessions()
       return result
@@ -491,8 +496,6 @@ import { readWebdavConfig, writeWebdavConfig, clearWebdavConfig, getDecryptedWeb
     }
   })
 ```
-
-注意 `auth` 与 `authMgr` 是同一个对象的两个别名（见 routes.ts 顶部已有 `import { auth, authGuard }` 与 `import { auth as authMgr }`），调用 `auth.clearSessions()` 即可。无需新增 import。
 
 - [ ] **步骤 7：类型检查 + dev 起服务冒烟**
 
