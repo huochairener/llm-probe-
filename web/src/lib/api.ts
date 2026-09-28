@@ -49,7 +49,13 @@ export const api = {
     request<T>(url, { method: 'POST', body: JSON.stringify(body || {}) }),
   put: <T>(url: string, body?: any) =>
     request<T>(url, { method: 'PUT', body: JSON.stringify(body || {}) }),
-  del: <T>(url: string) => request<T>(url, { method: 'DELETE' })
+  del: <T>(url: string) => request<T>(url, { method: 'DELETE' }),
+  syncStatus: () => request<{ configured: boolean; url?: string; username?: string }>('/api/sync/status', { method: 'GET' }),
+  syncSaveConfig: (body: { url: string; username: string; password: string }) =>
+    request<{ ok: true }>('/api/sync/config', { method: 'PUT', body: JSON.stringify(body) }),
+  syncTest: () => request<{ ok: true }>('/api/sync/test', { method: 'POST' }),
+  syncBackup: () => request<{ ok: true; count: number; createdAt: number }>('/api/sync/backup', { method: 'POST' }),
+  syncRestore: () => request<{ ok: true; count: number }>('/api/sync/restore', { method: 'POST' })
 }
 
 // SSE 流式请求（POST）— 返回 AbortController 用于取消
