@@ -1,0 +1,23 @@
+# 依赖
+node_modules/
+
+# 构建产物
+server/dist/
+web/dist/
+dist/
+build/sea-bundle.cjs
+build/sea-prep.blob
+
+# 运行时数据（含密文/口令 hash，不提交）
+server/data/*.json
+data/*.json
+
+# Vite 缓存
+web/.vite/
+
+# Superpowers 临时工作区
+.superpowers/
+
+# 系统
+.DS_Store
+Thumbs.db
