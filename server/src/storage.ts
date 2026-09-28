@@ -17,6 +17,13 @@ const DATA_BASE = isSea() ? path.dirname(process.execPath) : path.join(__dirname
 const DATA_DIR = path.join(DATA_BASE, 'data')
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json')
 const CONFIGS_FILE = path.join(DATA_DIR, 'configs.json')
+const WEBDAV_FILE = path.join(DATA_DIR, 'webdav.json')
+
+export interface WebdavConfig {
+  url: string
+  username: string
+  passwordCipher: string // base64: salt(16)||iv(12)||ciphertext||authTag(16)
+}
 
 export interface Settings {
   hasPassword: boolean
@@ -74,6 +81,24 @@ export function writeConfigs(list: Config[]) {
   fs.writeFileSync(CONFIGS_FILE, JSON.stringify(list, null, 2))
 }
 
+export function readWebdavConfig(): WebdavConfig | null {
+  if (!fs.existsSync(WEBDAV_FILE)) return null
+  try {
+    return JSON.parse(fs.readFileSync(WEBDAV_FILE, 'utf8')) as WebdavConfig
+  } catch {
+    return null
+  }
+}
+
+export function writeWebdavConfig(cfg: WebdavConfig) {
+  ensureDataDir()
+  fs.writeFileSync(WEBDAV_FILE, JSON.stringify(cfg, null, 2))
+}
+
+export function clearWebdavConfig() {
+  if (fs.existsSync(WEBDAV_FILE)) fs.unlinkSync(WEBDAV_FILE)
+}
+
 // 口令 hash：scrypt
 export function hashPassword(password: string) {
   const salt = crypto.randomBytes(16)
@@ -128,4 +153,14 @@ export function decryptApiKey(password: string, packed: string): string {
   decipher.setAuthTag(tag)
   const dec = Buffer.concat([decipher.update(enc), decipher.final()])
   return dec.toString('utf8')
+}
+
+export function getDecryptedWebdavPassword(password: string): string | null {
+  const cfg = readWebdavConfig()
+  if (!cfg || !cfg.passwordCipher) return null
+  try {
+    return decryptApiKey(password, cfg.passwordCipher)
+  } catch {
+    return null
+  }
 }
