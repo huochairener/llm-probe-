@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import { readSettings, writeSettings, hashPassword, verifyPassword } from './storage.js'
-import { readConfigs, writeConfigs, encryptApiKey, decryptApiKey } from './storage.js'
+import { readConfigs, writeConfigs, encryptApiKey, decryptApiKey, readWebdavConfig, writeWebdavConfig } from './storage.js'
 import type { Config } from './storage.js'
 
 class AuthManager {
@@ -58,10 +58,30 @@ class AuthManager {
     }))
     writeConfigs(reEncrypted)
 
+    // 重加密 webdav.json 的密码（若存在）
+    const webdav = readWebdavConfig()
+    if (webdav && webdav.passwordCipher) {
+      try {
+        const plainWdPass = decryptApiKey(oldPw, webdav.passwordCipher)
+        writeWebdavConfig({
+          ...webdav,
+          passwordCipher: encryptApiKey(newPw, plainWdPass),
+        })
+      } catch {
+        // webdav 密文损坏则跳过，不阻断改密
+      }
+    }
+
     const { salt, hash } = hashPassword(newPw)
     writeSettings({ hasPassword: true, passwordSalt: salt, passwordHash: hash })
     this.currentPassword = newPw
     return true
+  }
+
+  /** 恢复 settings 后调用：清空所有会话与内存口令，强制重登 */
+  clearSessions() {
+    this.sessions.clear()
+    this.currentPassword = null
   }
 }
 
