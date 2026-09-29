@@ -32,7 +32,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   setStatus: (initialized, unlocked) => set({ initialized, unlocked }),
 
-  setSession: (token) => set({ sessionToken: token, unlocked: true }),
+  setSession: (token) => set({ sessionToken: token, unlocked: true, initialized: true }),
 
   logout: async () => {
     try {

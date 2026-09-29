@@ -21,13 +21,14 @@ async function request<T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // 仅当确实带 body 时才声明 JSON content-type；
+  // 否则 Fastify 的 JSON 解析器会因 "content-type 是 json 但 body 为空" 抛 FST_ERR_CTP_EMPTY_JSON_BODY。
+  const headers: Record<string, string> = { ...authHeaders() }
+  if (options.body != null) headers['Content-Type'] = 'application/json'
+  Object.assign(headers, options.headers || {})
   const res = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders(),
-      ...(options.headers || {})
-    }
+    headers
   })
 
   if (res.status === 401) {

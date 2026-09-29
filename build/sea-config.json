@@ -5,8 +5,8 @@
   "useSnapshot": false,
   "useCodeCache": false,
   "assets": {
-    "web/assets/index-B-u6wbSO.js": "D:\\practiceProjects\\llm-test\\web\\dist\\assets\\index-B-u6wbSO.js",
-    "web/assets/index-D4d5U3xV.css": "D:\\practiceProjects\\llm-test\\web\\dist\\assets\\index-D4d5U3xV.css",
-    "web/index.html": "D:\\practiceProjects\\llm-test\\web\\dist\\index.html"
+    "web/assets/index-D4d5U3xV.css": "web/dist/assets/index-D4d5U3xV.css",
+    "web/assets/index-Dsd28p69.js": "web/dist/assets/index-Dsd28p69.js",
+    "web/index.html": "web/dist/index.html"
   }
 }

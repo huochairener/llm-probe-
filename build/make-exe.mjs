@@ -53,7 +53,7 @@ const assets = {}
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) walk(full, `${prefix}${entry.name}/`)
-    else assets[`web/${prefix}${entry.name}`] = full
+    else assets[`web/${prefix}${entry.name}`] = path.relative(root, full).split(path.sep).join('/')
   }
 })(path.join(root, 'web', 'dist'), '')
 
@@ -65,7 +65,7 @@ const config = {
   useCodeCache: false,
   assets,
 }
-fs.writeFileSync(configFile, JSON.stringify(config, null, 2))
+fs.writeFileSync(configFile, JSON.stringify(config, null, 2) + '\n')
 console.log(`\n内嵌 ${Object.keys(assets).length} 个前端资源: ${Object.keys(assets).join(', ')}`)
 
 // 4. 生成 SEA blob
